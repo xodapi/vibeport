@@ -16,7 +16,7 @@ function upstreamBaseUrl(): string {
 
 async function forward(request: NextRequest, segments: string[]): Promise<Response> {
   const path = segments.join('/');
-  if (!allowedPaths.has(path)) {
+  if (!allowedPaths.has(path) && !/^export\/usage\.(csv|json)$/.test(path)) {
     return NextResponse.json({ error: 'Unsupported proxy endpoint' }, { status: 404 });
   }
 

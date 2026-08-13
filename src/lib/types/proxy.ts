@@ -115,11 +115,38 @@ export interface UsageData {
   path: string | null;
   today: string;
   totals: UsageSummary | null;
-  by_day: Array<Record<string, unknown>>;
-  by_model_today: Array<Record<string, unknown>>;
-  by_model_24h: Array<Record<string, unknown>>;
+  by_day: DayUsage[];
+  by_model_today: ModelUsage[];
+  by_model_24h: ModelUsage[];
 }
 
+export interface DayUsage {
+  day: string;
+  requests: number;
+  ok: number;
+  fail: number;
+  rate_limited: number;
+  total_tokens: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms_avg: number;
+  cost: number;
+}
+
+export interface ModelUsage {
+  model: string;
+  requests: number;
+  ok: number;
+  fail: number;
+  rate_limited: number;
+  total_tokens: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms_avg: number;
+  cost: number;
+  usage_reported: number;
+  usage_estimated: number;
+}
 export interface DiagResponse {
   version: string;
   app: string;

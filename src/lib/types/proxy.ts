@@ -39,6 +39,15 @@ export interface TimeSeriesPoint {
   total_tokens: number;
 }
 
+export interface RecentRequest {
+  timestamp?: string;
+  model?: string;
+  status?: number;
+  latency_ms?: number;
+  total_tokens?: number;
+  error_type?: string | null;
+}
+
 export interface ModelStatus {
   model: string;
   state: string;
@@ -70,6 +79,7 @@ export interface MetricsSnapshot {
     all: ModelStatus[];
   };
   usage: UsageData;
+  recent: RecentRequest[];
   privacy: {
     stores_prompts: boolean;
     stores_responses: boolean;

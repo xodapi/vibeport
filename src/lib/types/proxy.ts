@@ -165,9 +165,13 @@ export interface DiagResponse {
 
 export interface ProxyProvider {
   name: string;
-  base_url: string;
-  models: string[];
-  healthy: boolean;
+  url: string;
+  state: string;
+  circuit: string;
+  consecutive_failures: number;
+  total_requests: number;
+  total_failures: number;
+  total_tokens: number;
 }
 
 export interface ProvidersResponse {

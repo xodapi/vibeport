@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-jetbrains: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-bg-1 text-text font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Card component */
+  .card {
+    @apply bg-bg-3 border border-border rounded-lg p-6 shadow-sm;
+  }
+  
+  /* Button variants */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill px-6 py-3 
+           font-medium transition-all duration-200 
+           focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply bg-accent text-bg-1 hover:bg-accent-hover;
+  }
+  
+  .btn-secondary {
+    @apply bg-bg-4 text-text hover:bg-bg-5;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent hover:bg-bg-3;
+  }
+  
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-2 bg-bg-2 border border-border rounded-md
+           text-text placeholder:text-text-muted
+           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
+           transition-all duration-200;
+  }
+  
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-pill
+           text-small font-medium;
+  }
+  
+  .badge-success {
+    @apply bg-success/15 text-success;
+  }
+  
+  .badge-warning {
+    @apply bg-warning/15 text-warning;
+  }
+  
+  .badge-error {
+    @apply bg-error/15 text-error;
+  }
+}
+
+@layer utilities {
+  /* Fluid typography */
+  .text-fluid-display {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+  }
+  
+  .text-fluid-h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+  }
+  
+  .text-fluid-body {
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+  }
+  
+  /* Smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

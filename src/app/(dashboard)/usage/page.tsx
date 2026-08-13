@@ -12,6 +12,8 @@ import {
 } from 'recharts';
 import { useState } from 'react';
 import { useUsage } from '@/lib/hooks/useUsage';
+import { useSettingsStore } from '@/lib/stores/settings';
+import { estimateCost, formatCost } from '@/lib/utils/cost';
 
 const ranges = [
   { label: 'Today', days: 1 },
@@ -24,6 +26,13 @@ const formatter = new Intl.NumberFormat('en-US');
 export default function UsagePage() {
   const [days, setDays] = useState(7);
   const { data, error, isLoading, mutate } = useUsage(days);
+  const costRates = useSettingsStore((state) => state.costPerThousandTokens);
+  const modelUsage = data?.by_model_today ?? [];
+  const estimatedCost = modelUsage.reduce<number | null>((total, entry) => {
+    const cost = estimateCost(entry.total_tokens, costRates[entry.model]);
+    return cost === null ? total : (total ?? 0) + cost;
+  }, null);
+  const modelsWithRates = modelUsage.filter((entry) => estimateCost(entry.total_tokens, costRates[entry.model]) !== null).length;
 
   return (
     <section className="space-y-6">
@@ -63,10 +72,11 @@ export default function UsagePage() {
         <div className="card text-sm text-error">Unable to load usage data. Check the proxy connection and try again.</div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Metric label="Requests" value={formatter.format(data?.totals?.requests ?? 0)} />
             <Metric label="Total tokens" value={formatter.format(data?.totals?.total_tokens ?? 0)} />
             <Metric label="Success rate" value={data?.totals?.requests ? `${Math.round((data.totals.ok / data.totals.requests) * 100)}%` : '—'} />
+            <Metric label="Local cost estimate" value={formatCost(estimatedCost)} detail={modelsWithRates ? `${modelsWithRates} model${modelsWithRates === 1 ? '' : 's'} with rates` : 'Add rates in Settings'} />
           </div>
 
           <article className="card">
@@ -99,7 +109,7 @@ export default function UsagePage() {
             <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="font-semibold">Per-model breakdown</h3>
-                <p className="mt-1 text-sm text-text-muted">Today’s recorded model usage.</p>
+                <p className="mt-1 text-sm text-text-muted">Today’s recorded model usage and local cost estimates.</p>
               </div>
               <div className="flex gap-2">
                 <a className="btn btn-secondary px-3 py-2 text-xs" href={`/api/proxy/export/usage.csv?days=${days}`} download>
@@ -112,9 +122,9 @@ export default function UsagePage() {
             </div>
             {data?.by_model_today.length ? (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] text-left text-sm">
+                <table className="w-full min-w-[780px] text-left text-sm">
                   <thead className="border-b border-border text-xs uppercase tracking-wide text-text-muted">
-                    <tr><th className="py-3">Model</th><th className="py-3 text-right">Requests</th><th className="py-3 text-right">OK</th><th className="py-3 text-right">429</th><th className="py-3 text-right">Tokens</th><th className="py-3 text-right">Avg latency</th></tr>
+                    <tr><th className="py-3">Model</th><th className="py-3 text-right">Requests</th><th className="py-3 text-right">OK</th><th className="py-3 text-right">429</th><th className="py-3 text-right">Tokens</th><th className="py-3 text-right">Local estimate</th><th className="py-3 text-right">Avg latency</th></tr>
                   </thead>
                   <tbody>
                     {data.by_model_today.map((entry) => (
@@ -124,6 +134,7 @@ export default function UsagePage() {
                         <td className="py-3 text-right text-success">{formatter.format(entry.ok)}</td>
                         <td className="py-3 text-right text-warning">{formatter.format(entry.rate_limited)}</td>
                         <td className="py-3 text-right text-text-muted">{formatter.format(entry.total_tokens)}</td>
+                        <td className="py-3 text-right text-text-muted">{formatCost(estimateCost(entry.total_tokens, costRates[entry.model]))}</td>
                         <td className="py-3 text-right text-text-muted">{entry.latency_ms_avg} ms</td>
                       </tr>
                     ))}
@@ -137,11 +148,11 @@ export default function UsagePage() {
         </>
       )}
 
-      <p className="flex items-center gap-2 text-xs text-text-muted"><Download className="h-3.5 w-3.5" /> Exports contain aggregate usage only, never prompts or responses.</p>
+      <p className="flex items-center gap-2 text-xs text-text-muted"><Download className="h-3.5 w-3.5" /> Exports contain aggregate usage only, never prompts or responses. Cost estimates are calculated locally and are not included in proxyrs exports.</p>
     </section>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return <article className="card p-5"><p className="text-sm text-text-muted">{label}</p><p className="mt-2 text-3xl font-semibold">{value}</p></article>;
+function Metric({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return <article className="card p-5"><p className="text-sm text-text-muted">{label}</p><p className="mt-2 text-3xl font-semibold">{value}</p>{detail && <p className="mt-1 text-xs text-text-muted">{detail}</p>}</article>;
 }

@@ -1,15 +1,25 @@
 'use client';
 
-import { Clipboard, LoaderCircle, RotateCcw, Send, TriangleAlert } from 'lucide-react';
+import { BookmarkPlus, Clipboard, LoaderCircle, RotateCcw, Send, Trash2, TriangleAlert } from 'lucide-react';
 import { FormEvent, KeyboardEvent, useEffect, useState } from 'react';
 import { ProxyApiError, proxyApi } from '@/lib/api/proxy';
 import { useModels } from '@/lib/hooks/useModels';
+import { extractOpenAiTextDelta } from '@/lib/utils/sse';
 
 const HISTORY_KEY = 'vibeport:prompt-history';
+const SAVED_PROMPTS_KEY = 'vibeport:saved-prompts';
 
 function readHistory(): string[] {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]') as string[];
+  } catch {
+    return [];
+  }
+}
+
+function readSavedPrompts(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_PROMPTS_KEY) ?? '[]') as string[];
   } catch {
     return [];
   }
@@ -21,6 +31,7 @@ export default function ModelsPage() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
   const [history, setHistory] = useState<string[]>([]);
+  const [savedPrompts, setSavedPrompts] = useState<string[]>([]);
   const [stream, setStream] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [elapsed, setElapsed] = useState<number | null>(null);
@@ -28,6 +39,7 @@ export default function ModelsPage() {
 
   useEffect(() => {
     setHistory(readHistory());
+    setSavedPrompts(readSavedPrompts());
   }, []);
 
   useEffect(() => {
@@ -59,12 +71,30 @@ export default function ModelsPage() {
         const reader = res.body?.getReader();
         if (!reader) throw new Error('No response stream received');
         const decoder = new TextDecoder();
-        let text = '';
+        let rawText = '';
+        let parsedText = '';
+        let buffer = '';
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          text += decoder.decode(value, { stream: true });
-          setResponse(text);
+          buffer += decoder.decode(value, { stream: true });
+          const frames = buffer.split(/\n\n/);
+          buffer = frames.pop() ?? '';
+          for (const frame of frames) {
+            rawText += `${frame}\n\n`;
+            const delta = extractOpenAiTextDelta(frame);
+            if (delta === null) {
+              parsedText = rawText;
+              continue;
+            }
+            parsedText += delta;
+          }
+          setResponse(parsedText || rawText);
+        }
+        if (buffer) {
+          rawText += buffer;
+          const delta = extractOpenAiTextDelta(buffer);
+          setResponse(delta === null ? rawText : `${parsedText}${delta}`);
         }
       } else {
         const result = await proxyApi.complete({
@@ -95,6 +125,20 @@ export default function ModelsPage() {
 
   function onPromptKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') void send();
+  }
+
+  function savePrompt() {
+    const clean = prompt.trim();
+    if (!clean) return;
+    const next = [clean, ...savedPrompts.filter((item) => item !== clean)].slice(0, 20);
+    setSavedPrompts(next);
+    localStorage.setItem(SAVED_PROMPTS_KEY, JSON.stringify(next));
+  }
+
+  function removeSavedPrompt(promptToRemove: string) {
+    const next = savedPrompts.filter((item) => item !== promptToRemove);
+    setSavedPrompts(next);
+    localStorage.setItem(SAVED_PROMPTS_KEY, JSON.stringify(next));
   }
 
   return (
@@ -147,6 +191,9 @@ export default function ModelsPage() {
           >
             <RotateCcw className="h-4 w-4" /> Reset
           </button>
+          <button className="btn btn-secondary px-4 py-2 text-sm" type="button" disabled={!prompt.trim()} onClick={savePrompt}>
+            <BookmarkPlus className="h-4 w-4" /> Save prompt
+          </button>
         </div>
 
         {history.length > 0 && (
@@ -159,6 +206,21 @@ export default function ModelsPage() {
                 </button>
               ))}
             </div>
+          </div>
+        )}
+        {savedPrompts.length > 0 && (
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">Saved prompts</p>
+            <ul className="space-y-2">
+              {savedPrompts.map((item) => (
+                <li className="flex items-center gap-2 rounded-md bg-bg-4 p-2" key={item}>
+                  <button type="button" className="min-w-0 flex-1 truncate text-left text-xs text-text-muted hover:text-text" onClick={() => setPrompt(item)}>{item}</button>
+                  <button type="button" className="rounded p-1 text-text-muted hover:bg-bg-5 hover:text-error focus:outline-none focus:ring-2 focus:ring-accent" aria-label="Delete saved prompt" onClick={() => removeSavedPrompt(item)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </form>
@@ -182,7 +244,7 @@ export default function ModelsPage() {
             <p>{error}</p>
           </div>
         ) : response ? (
-          <pre className="mt-5 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-md bg-bg-1 p-4 font-mono text-sm leading-6 text-text">
+          <pre className="mt-5 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-md bg-bg-1 p-4 font-mono text-sm leading-6 text-text" aria-live="polite">
             {response}
           </pre>
         ) : (

@@ -20,8 +20,7 @@ export class ProxyApiError extends Error {
 }
 
 function getProxyBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_PROXY_URL?.trim();
-  return (configured || 'http://127.0.0.1:3001').replace(/\/+$/, '');
+  return '/api/proxy';
 }
 
 export const proxyBaseUrl = getProxyBaseUrl();

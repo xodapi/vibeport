@@ -79,6 +79,16 @@ function EmptyChart() {
   );
 }
 
+function ChartSummary({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return <p className="sr-only">{`${title}. ${description}`}</p>;
+}
+
 function RecentRequests({ requests }: { requests: RecentRequest[] }) {
   if (requests.length === 0) {
     return (
@@ -132,6 +142,9 @@ export default function DashboardPage() {
     { name: 'Rate limited', value: summary?.rate_limited ?? 0, color: '#F59E0B' },
     { name: 'Failed', value: Math.max(0, (summary?.fail ?? 0) - (summary?.rate_limited ?? 0)), color: '#F43F5E' },
   ].filter((entry) => entry.value > 0);
+  const requestSummary = summary
+    ? `${summary.requests} requests, ${summary.ok} successful, ${summary.fail} failed, and ${summary.rate_limited} rate limited.`
+    : 'Metrics are loading.';
 
   if (error) {
     return (
@@ -153,17 +166,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-labelledby="dashboard-heading">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-text-muted">Live overview, refreshes every 10 seconds</p>
-          <h2 className="mt-1 text-2xl font-semibold">Proxy activity</h2>
+          <h2 id="dashboard-heading" className="mt-1 text-2xl font-semibold">Proxy activity</h2>
         </div>
         <button
           type="button"
           className="btn btn-secondary px-4 py-2 text-sm"
           disabled={isLoading}
           onClick={() => mutate()}
+          aria-label="Refresh proxy metrics"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
@@ -178,11 +192,12 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.9fr)]">
-        <article className="card">
+        <article className="card" aria-labelledby="activity-chart-title">
           <div className="mb-5">
-            <h3 className="font-semibold">Request activity</h3>
+            <h3 id="activity-chart-title" className="font-semibold">Request activity</h3>
             <p className="mt-1 text-sm text-text-muted">Requests and failures over the selected five-minute window</p>
           </div>
+          <ChartSummary title="Request activity" description={requestSummary} />
           {data?.timeseries.length ? (
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -207,11 +222,12 @@ export default function DashboardPage() {
           )}
         </article>
 
-        <article className="card">
+        <article className="card" aria-labelledby="health-chart-title">
           <div className="mb-5">
-            <h3 className="font-semibold">Response health</h3>
+            <h3 id="health-chart-title" className="font-semibold">Response health</h3>
             <p className="mt-1 text-sm text-text-muted">Current request outcomes</p>
           </div>
+          <ChartSummary title="Response health" description={requestSummary} />
           {pieData.length ? (
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -240,7 +256,7 @@ export default function DashboardPage() {
         <RecentRequests requests={data?.recent ?? []} />
       </article>
 
-      <p className="flex items-center gap-2 text-xs text-text-muted">
+      <p className="flex items-center gap-2 text-xs text-text-muted" aria-live="polite">
         <Gauge className="h-3.5 w-3.5" aria-hidden="true" />
         {data ? `Updated ${new Date(data.generated_at).toLocaleTimeString()}` : 'Loading metrics…'}
       </p>

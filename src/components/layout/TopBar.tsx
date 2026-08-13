@@ -26,6 +26,8 @@ export function TopBar() {
         <span
           className="inline-flex items-center gap-2 rounded-pill border border-border bg-bg-3 px-3 py-1.5 text-xs text-text-muted"
           title={statusLabel}
+          role="status"
+          aria-live="polite"
         >
           <Circle
             className={`h-2.5 w-2.5 fill-current ${
@@ -33,7 +35,7 @@ export function TopBar() {
             }`}
             aria-hidden="true"
           />
-          <span className="hidden sm:inline">{statusLabel}</span>
+          <span>{statusLabel}</span>
         </span>
         <span className="hidden rounded-pill border border-border bg-bg-3 px-3 py-1.5 text-xs text-text-muted sm:inline">
           v0.1.0

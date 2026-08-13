@@ -74,6 +74,22 @@
 }
 
 @layer utilities {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .skip-link {
+    @apply fixed left-4 top-4 z-[100] -translate-y-20 rounded-md bg-accent px-4 py-2 font-medium text-bg-1 transition-transform focus:translate-y-0;
+  }
+
   /* Fluid typography */
   .text-fluid-display {
     font-size: clamp(2rem, 5vw, 3.5rem);

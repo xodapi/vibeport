@@ -1,9 +1,10 @@
 # VibePort
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/xodapi/vibeport/actions/workflows/ci.yml/badge.svg)](https://github.com/xodapi/vibeport/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38bdf8)](https://tailwindcss.com/)
 
 **Your portal to VibeMode** - Beautiful web dashboard for LLM development. Test models, monitor quotas, manage proxy, track costs—all in one place.
 
@@ -368,4 +369,3 @@ MIT License - see [LICENSE](LICENSE) file for details.
 **Made with ❤️ for the LLM developer community**
 
 [![GitHub Stars](https://img.shields.io/github/stars/xodapi/vibeport?style=social)](https://github.com/xodapi/vibeport)
-[![Twitter Follow](https://img.shields.io/twitter/follow/vibeport?style=social)](https://twitter.com/vibeport)

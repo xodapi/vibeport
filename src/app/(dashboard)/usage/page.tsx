@@ -13,7 +13,7 @@ import {
 import { useState } from 'react';
 import { useUsage } from '@/lib/hooks/useUsage';
 import { useSettingsStore } from '@/lib/stores/settings';
-import { estimateCost, formatCost } from '@/lib/utils/cost';
+import { createCostCsv, createCostJson, estimateCost, formatCost } from '@/lib/utils/cost';
 
 const ranges = [
   { label: 'Today', days: 1 },
@@ -33,6 +33,24 @@ export default function UsagePage() {
     return cost === null ? total : (total ?? 0) + cost;
   }, null);
   const modelsWithRates = modelUsage.filter((entry) => estimateCost(entry.total_tokens, costRates[entry.model]) !== null).length;
+  const costExportRows = modelUsage.map((entry) => ({
+    model: entry.model,
+    requests: entry.requests,
+    totalTokens: entry.total_tokens,
+    ratePerThousandTokens: costRates[entry.model] ?? null,
+    estimatedCost: estimateCost(entry.total_tokens, costRates[entry.model]),
+  }));
+
+  function downloadLocalExport(format: 'csv' | 'json') {
+    const content = format === 'csv' ? createCostCsv(costExportRows) : createCostJson(costExportRows);
+    const blob = new Blob([content], { type: format === 'csv' ? 'text/csv;charset=utf-8' : 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `vibeport-local-cost-${days}d.${format}`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <section className="space-y-6">
@@ -118,6 +136,12 @@ export default function UsagePage() {
                 <a className="btn btn-secondary px-3 py-2 text-xs" href={`/api/proxy/export/usage.json?days=${days}`} download>
                   <FileJson className="h-3.5 w-3.5" /> JSON
                 </a>
+                <button className="btn btn-secondary px-3 py-2 text-xs" type="button" onClick={() => downloadLocalExport('csv')} disabled={!costExportRows.length}>
+                  Local CSV
+                </button>
+                <button className="btn btn-secondary px-3 py-2 text-xs" type="button" onClick={() => downloadLocalExport('json')} disabled={!costExportRows.length}>
+                  Local JSON
+                </button>
               </div>
             </div>
             {data?.by_model_today.length ? (

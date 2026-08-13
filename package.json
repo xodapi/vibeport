@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
@@ -42,7 +44,8 @@
     "eslint-config-next": "^15.1.6",
     "prettier": "^3.4.2",
     "@typescript-eslint/eslint-plugin": "^8.19.1",
-    "@typescript-eslint/parser": "^8.19.1"
+    "@typescript-eslint/parser": "^8.19.1",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=18.0.0",

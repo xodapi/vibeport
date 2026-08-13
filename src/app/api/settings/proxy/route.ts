@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-function isAllowedProxyUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return (
-      (url.protocol === 'http:' || url.protocol === 'https:') &&
-      ['127.0.0.1', 'localhost', '::1'].includes(url.hostname)
-    );
-  } catch {
-    return false;
-  }
-}
+import { normalizeLocalProxyUrl } from '@/lib/utils/proxy-url';
 
 export async function POST(request: NextRequest) {
   let body: { proxyUrl?: string };
@@ -19,9 +8,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Request body must be valid JSON.' }, { status: 400 });
   }
-  const proxyUrl = body.proxyUrl?.trim().replace(/\/+$/, '');
+  const proxyUrl = body.proxyUrl ? normalizeLocalProxyUrl(body.proxyUrl) : null;
 
-  if (!proxyUrl || !isAllowedProxyUrl(proxyUrl)) {
+  if (!proxyUrl) {
     return NextResponse.json(
       { error: 'Proxy URL must use http(s) and point to localhost.' },
       { status: 400 },

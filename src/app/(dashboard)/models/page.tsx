@@ -9,6 +9,13 @@ import { extractOpenAiTextDelta } from '@/lib/utils/sse';
 const HISTORY_KEY = 'vibeport:prompt-history';
 const SAVED_PROMPTS_KEY = 'vibeport:saved-prompts';
 
+interface ComparisonResult {
+  model: string;
+  response: string;
+  error: string | null;
+  elapsed: number | null;
+}
+
 function readHistory(): string[] {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]') as string[];
@@ -33,6 +40,9 @@ export default function ModelsPage() {
   const [history, setHistory] = useState<string[]>([]);
   const [savedPrompts, setSavedPrompts] = useState<string[]>([]);
   const [stream, setStream] = useState(true);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [comparisonModel, setComparisonModel] = useState('');
+  const [comparisonResults, setComparisonResults] = useState<ComparisonResult[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [elapsed, setElapsed] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +56,19 @@ export default function ModelsPage() {
     if (!model && models?.data[0]) setModel(models.data[0].id);
   }, [model, models]);
 
+  useEffect(() => {
+    if (!comparisonModel && models?.data[1]) setComparisonModel(models.data[1].id);
+  }, [comparisonModel, models]);
+
+  function messageForError(caught: unknown) {
+    const apiError = caught instanceof ProxyApiError ? caught : null;
+    return apiError?.status === 429
+      ? 'The upstream provider rate-limited this request (HTTP 429).'
+      : caught instanceof Error
+        ? caught.message
+        : 'The request failed unexpectedly.';
+  }
+
   async function send(event?: FormEvent) {
     event?.preventDefault();
     if (!model || !prompt.trim() || isSending) return;
@@ -54,10 +77,33 @@ export default function ModelsPage() {
     setResponse('');
     setError(null);
     setElapsed(null);
+    setComparisonResults([]);
     const started = performance.now();
     const cleanPrompt = prompt.trim();
 
     try {
+      if (comparisonMode) {
+        const compareModels = [model, comparisonModel].filter((value, index, values) => value && values.indexOf(value) === index);
+        const results = await Promise.all(compareModels.map(async (selectedModel): Promise<ComparisonResult> => {
+          const compareStarted = performance.now();
+          try {
+            const result = await proxyApi.complete({
+              model: selectedModel,
+              messages: [{ role: 'user', content: cleanPrompt }],
+              stream: false,
+            });
+            return { model: selectedModel, response: JSON.stringify(result, null, 2), error: null, elapsed: Math.round(performance.now() - compareStarted) };
+          } catch (caught) {
+            return { model: selectedModel, response: '', error: messageForError(caught), elapsed: Math.round(performance.now() - compareStarted) };
+          }
+        }));
+        setComparisonResults(results);
+        const nextHistory = [cleanPrompt, ...history.filter((item) => item !== cleanPrompt)].slice(0, 20);
+        setHistory(nextHistory);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
+        return;
+      }
+
       if (stream) {
         const res = await fetch('/api/proxy/v1/chat/completions', {
           method: 'POST',
@@ -109,14 +155,7 @@ export default function ModelsPage() {
       setHistory(nextHistory);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
     } catch (caught) {
-      const apiError = caught instanceof ProxyApiError ? caught : null;
-      setError(
-        apiError?.status === 429
-          ? 'The upstream provider has rate-limited this request (HTTP 429). Wait for the quota to reset or configure another provider.'
-          : caught instanceof Error
-            ? caught.message
-            : 'The request failed unexpectedly.',
-      );
+      setError(messageForError(caught));
     } finally {
       setElapsed(Math.round(performance.now() - started));
       setIsSending(false);
@@ -175,19 +214,31 @@ export default function ModelsPage() {
         </label>
 
         <label className="flex cursor-pointer items-center gap-3 text-sm text-text-muted">
-          <input type="checkbox" checked={stream} onChange={(event) => setStream(event.target.checked)} />
-          Stream raw server-sent events
+          <input type="checkbox" checked={stream} disabled={comparisonMode} onChange={(event) => setStream(event.target.checked)} />
+          Stream response
         </label>
+        <label className="flex cursor-pointer items-center gap-3 text-sm text-text-muted">
+          <input type="checkbox" checked={comparisonMode} onChange={(event) => setComparisonMode(event.target.checked)} />
+          Compare two models (non-streaming)
+        </label>
+        {comparisonMode && (
+          <label className="block text-sm font-medium">
+            Comparison model
+            <select className="input mt-2" value={comparisonModel} onChange={(event) => setComparisonModel(event.target.value)}>
+              {models?.data.map((entry) => <option key={entry.id} value={entry.id} disabled={entry.id === model}>{entry.id}</option>)}
+            </select>
+          </label>
+        )}
 
         <div className="flex flex-wrap gap-3">
-          <button className="btn btn-primary px-4 py-2 text-sm" type="submit" disabled={!model || !prompt.trim() || isSending}>
+          <button className="btn btn-primary px-4 py-2 text-sm" type="submit" disabled={!model || !prompt.trim() || isSending || (comparisonMode && !comparisonModel)}>
             {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {isSending ? 'Sending' : 'Send request'}
+            {isSending ? 'Sending' : comparisonMode ? 'Compare models' : 'Send request'}
           </button>
           <button
             className="btn btn-secondary px-4 py-2 text-sm"
             type="button"
-            onClick={() => { setPrompt(''); setResponse(''); setError(null); setElapsed(null); }}
+            onClick={() => { setPrompt(''); setResponse(''); setError(null); setElapsed(null); setComparisonResults([]); }}
           >
             <RotateCcw className="h-4 w-4" /> Reset
           </button>
@@ -228,8 +279,8 @@ export default function ModelsPage() {
       <article className="card flex min-h-[520px] flex-col">
         <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
           <div>
-            <h3 className="font-semibold">Response</h3>
-            <p className="mt-1 text-sm text-text-muted">{elapsed === null ? 'Waiting for a request' : `Completed in ${elapsed} ms`}</p>
+            <h3 className="font-semibold">{comparisonMode ? 'Comparison' : 'Response'}</h3>
+            <p className="mt-1 text-sm text-text-muted">{comparisonMode ? 'The same prompt is sent to both models concurrently.' : elapsed === null ? 'Waiting for a request' : `Completed in ${elapsed} ms`}</p>
           </div>
           {response && (
             <button className="btn btn-secondary px-3 py-2 text-xs" type="button" onClick={() => void navigator.clipboard.writeText(response)}>
@@ -238,7 +289,16 @@ export default function ModelsPage() {
           )}
         </div>
 
-        {error ? (
+        {comparisonMode && comparisonResults.length > 0 ? (
+          <div className="mt-5 grid flex-1 gap-4 lg:grid-cols-2">
+            {comparisonResults.map((result) => (
+              <section className="flex min-h-0 flex-col rounded-md border border-border bg-bg-1 p-4" key={result.model} aria-label={`${result.model} result`}>
+                <div className="mb-3 border-b border-border pb-3"><h4 className="truncate font-mono text-xs text-text">{result.model}</h4><p className="mt-1 text-xs text-text-muted">{result.elapsed} ms</p></div>
+                {result.error ? <p className="text-sm text-error">{result.error}</p> : <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words font-mono text-sm leading-6 text-text">{result.response}</pre>}
+              </section>
+            ))}
+          </div>
+        ) : error ? (
           <div className="mt-5 flex gap-3 rounded-md border border-error/40 bg-error/10 p-4 text-sm text-error">
             <TriangleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
             <p>{error}</p>

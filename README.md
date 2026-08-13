@@ -229,17 +229,11 @@ const vimitClient = {
 
 ## 🚢 Deployment
 
-### Vercel (Recommended)
+### Private deployment (recommended)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/xodapi/vibeport)
+VibePort is designed to reach a local or private `proxyrs` instance. Deploy it on the same machine or private network as the proxy, behind HTTPS and access control.
 
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-```
+See the full [deployment guide](docs/DEPLOYMENT.md), including Docker, reverse-proxy, and production-checklist instructions.
 
 ### Self-Hosted
 
@@ -257,7 +251,7 @@ pm2 start npm --name "vibeport" -- start
 ### Docker
 
 ```dockerfile
-# Dockerfile included
+# Provide a Dockerfile for your chosen runtime
 docker build -t vibeport .
 docker run -p 3000:3000 -e NEXT_PUBLIC_PROXY_URL=http://host.docker.internal:3001 vibeport
 ```
@@ -274,6 +268,7 @@ npm run build        # Production build
 npm run start        # Production server
 npm run lint         # ESLint check
 npm run type-check   # TypeScript check
+npm test             # Unit tests
 npm run format       # Prettier format
 ```
 

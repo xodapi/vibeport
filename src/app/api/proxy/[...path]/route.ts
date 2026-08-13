@@ -10,8 +10,12 @@ const allowedPaths = new Set([
   'v1/chat/completions',
 ]);
 
-function upstreamBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_PROXY_URL ?? 'http://127.0.0.1:3001').replace(/\/+$/, '');
+function upstreamBaseUrl(request: NextRequest): string {
+  return (
+    request.cookies.get('vibeport_proxy_url')?.value ??
+    process.env.NEXT_PUBLIC_PROXY_URL ??
+    'http://127.0.0.1:3001'
+  ).replace(/\/+$/, '');
 }
 
 async function forward(request: NextRequest, segments: string[]): Promise<Response> {
@@ -20,7 +24,8 @@ async function forward(request: NextRequest, segments: string[]): Promise<Respon
     return NextResponse.json({ error: 'Unsupported proxy endpoint' }, { status: 404 });
   }
 
-  const url = new URL(`${upstreamBaseUrl()}/${path}`);
+  const baseUrl = upstreamBaseUrl(request);
+  const url = new URL(`${baseUrl}/${path}`);
   request.nextUrl.searchParams.forEach((value, key) => url.searchParams.set(key, value));
 
   try {
@@ -45,7 +50,7 @@ async function forward(request: NextRequest, segments: string[]): Promise<Respon
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch {
     return NextResponse.json(
-      { error: `Unable to reach proxyrs at ${upstreamBaseUrl()}` },
+      { error: `Unable to reach proxyrs at ${baseUrl}` },
       { status: 502 },
     );
   }

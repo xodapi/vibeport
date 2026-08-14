@@ -6,41 +6,33 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38bdf8)](https://tailwindcss.com/)
 
-**Your portal to VibeMode** - Beautiful web dashboard for LLM development. Test models, monitor quotas, manage proxy, track costs—all in one place.
+**Your local control center for proxyrs** - A privacy-conscious dashboard for testing models, monitoring proxy health, analyzing usage, and estimating costs.
 
-🔗 **Live Demo:** [vibeport.vercel.app](https://vibeport.vercel.app) *(coming soon)*
+**Current release:** `v0.3.0` (release candidate)
 
 ---
 
 ## ✨ Features
 
 ### 🎯 Model Testing
-- **Instant Playground** - Test any LLM model in real-time
-- **Side-by-Side Comparison** - Compare model outputs simultaneously
+- **Instant Playground** - Test configured models through proxyrs
+- **Side-by-Side Comparison** - Compare two model outputs and latency
 - **Streaming Responses** - See tokens as they arrive
 - **Prompt Library** - Save and reuse your best prompts
-- **Cost Calculator** - Estimate costs before sending
+- **Readable Responses** - Render assistant text with JSON fallback
 
 ### 📊 Quota Monitoring
-- **Real-time Tracking** - Live VibeMode quota usage
-- **Visual Progress** - Beautiful charts and progress bars
-- **Low-Balance Alerts** - Never run out unexpectedly
-- **Multi-Account Support** - Manage multiple VibeMode accounts
-- **Usage Predictions** - AI-powered quota forecasting
+- Planned. Vimit server integration is not implemented yet.
 
 ### 🔄 Proxy Management
-- **Live Dashboard** - Real-time proxy metrics
-- **Provider Control** - Add/remove/configure providers on the fly
-- **Health Monitoring** - Track provider uptime and latency
-- **Load Balancing** - Visual routing configuration
-- **Request History** - Detailed logs and analytics
+- **Live Dashboard** - Real-time proxyrs metrics
+- **Health Monitoring** - Provider and circuit diagnostics
+- **Request History** - Privacy-safe aggregate analytics
 
 ### 💰 Cost Analytics
-- **Daily/Weekly/Monthly** - Comprehensive usage breakdowns
-- **Per-Model Costs** - See which models cost most
-- **Budget Tracking** - Set spending limits with alerts
-- **Export Reports** - Download CSV/JSON for accounting
-- **Cost Optimization** - AI suggestions to reduce spending
+- **Per-Model Costs** - Browser-local rates configured in Settings
+- **Export Reports** - Server aggregate CSV/JSON plus local cost CSV/JSON
+- **Transparent Estimates** - Missing rates remain unavailable, never zero
 
 ---
 
@@ -59,7 +51,7 @@ git clone https://github.com/xodapi/vibeport.git
 cd vibeport
 
 # Install dependencies
-npm install
+npm ci --ignore-scripts
 
 # Configure
 cp .env.example .env.local
@@ -88,15 +80,8 @@ Create `.env.local`:
 # Proxy API
 NEXT_PUBLIC_PROXY_URL=http://127.0.0.1:3001
 
-# Vimit Server (optional - for quota monitoring)
+# Reserved for a future Vimit server integration
 NEXT_PUBLIC_VIMIT_URL=http://127.0.0.1:3002
-
-# Features
-NEXT_PUBLIC_ENABLE_QUOTA_MONITOR=true
-NEXT_PUBLIC_ENABLE_COST_TRACKING=true
-
-# Analytics (optional)
-NEXT_PUBLIC_ANALYTICS_ID=your-analytics-id
 ```
 
 ---
@@ -107,21 +92,18 @@ NEXT_PUBLIC_ANALYTICS_ID=your-analytics-id
 - [Next.js 15](https://nextjs.org/) - React framework with App Router
 - [TypeScript](https://www.typescriptlang.org/) - Type safety
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first styling
-- [Radix UI](https://www.radix-ui.com/) - Accessible components
 - [Lucide Icons](https://lucide.dev/) - Beautiful icons
 
 **Data & State:**
 - [SWR](https://swr.vercel.app/) - Data fetching & caching
 - [Zustand](https://github.com/pmndrs/zustand) - State management
-- [React Hook Form](https://react-hook-form.com/) - Form handling
 
 **Charts & Visualization:**
 - [Recharts](https://recharts.org/) - Composable charting library
-- [React Syntax Highlighter](https://github.com/react-syntax-highlighter/react-syntax-highlighter) - Code highlighting
 
 **Integrations:**
 - [proxyrs](https://github.com/xodapi/proxyrs) - Rust-based LLM proxy
-- [vimit](https://github.com/xodapi/vimit) - VibeMode quota monitor
+- [vimit](https://github.com/xodapi/vimit) - Planned quota monitor integration
 
 ---
 
@@ -134,7 +116,6 @@ vibeport/
 │   │   ├── (dashboard)/       # Dashboard layout group
 │   │   │   ├── page.tsx       # Home dashboard
 │   │   │   ├── models/        # Model playground
-│   │   │   ├── quotas/        # Quota monitoring
 │   │   │   ├── usage/         # Usage analytics
 │   │   │   └── settings/      # Settings & config
 │   │   ├── layout.tsx         # Root layout
@@ -143,7 +124,6 @@ vibeport/
 │   │   ├── ui/                # Reusable UI components
 │   │   ├── charts/            # Chart components
 │   │   ├── models/            # Model-specific components
-│   │   ├── quotas/            # Quota components
 │   │   └── layout/            # Layout components
 │   ├── lib/
 │   │   ├── api/               # API clients
@@ -284,26 +264,18 @@ npm run format       # Prettier format
 
 ## 📊 Roadmap
 
-### v1.0 (MVP) - Current
-- [x] Model playground with streaming
-- [x] Basic usage dashboard
-- [x] Proxy metrics integration
-- [ ] Quota monitoring (vimit)
-- [ ] Cost tracking
+### v0.3.0 - Current
+- [x] Model playground with streaming and readable non-streaming responses
+- [x] Side-by-side model comparison
+- [x] Saved prompts and prompt history in localStorage
+- [x] Proxy dashboard, provider diagnostics, and usage analytics
+- [x] Browser-local cost estimates and CSV/JSON exports
+- [x] CI, accessibility improvements, deployment documentation
 
-### v2.0 - Next
-- [ ] WebSocket live monitoring
-- [ ] Multi-user authentication
-- [ ] Saved prompt library
-- [ ] Side-by-side model comparison
-- [ ] Budget alerts & notifications
-
-### v3.0 - Future
-- [ ] AI-powered cost optimization
-- [ ] Usage predictions & forecasting
-- [ ] Team collaboration features
-- [ ] Mobile app (React Native)
-- [ ] Plugin system for custom integrations
+### Next
+- [ ] Vimit quota page, once a server API is available
+- [ ] WebSocket live monitoring, once proxyrs exposes a WebSocket endpoint
+- [ ] Budget alerts and notification preferences
 
 ---
 
@@ -339,7 +311,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **LLM Developer Toolkit:**
 - **[proxyrs](https://github.com/xodapi/proxyrs)** - Rust-based OpenAI-compatible proxy (v1.7.0)
-- **[vimit](https://github.com/xodapi/vimit)** - VibeMode quota monitor CLI/TUI/GUI (v0.6.4)
+- **[vimit](https://github.com/xodapi/vimit)** - Planned quota monitor integration
 - **vibeport** (this project) - Web dashboard for unified management
 
 ---
@@ -347,9 +319,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) - Amazing React framework
-- [Vercel](https://vercel.com/) - Seamless deployment
-- [Shadcn/ui](https://ui.shadcn.com/) - Beautiful component patterns
-- [Radix UI](https://www.radix-ui.com/) - Accessible primitives
+- [Lucide](https://lucide.dev/) - Icon library
 
 ---
 
@@ -357,7 +327,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - 🐛 **Issues:** [GitHub Issues](https://github.com/xodapi/vibeport/issues)
 - 💬 **Discussions:** [GitHub Discussions](https://github.com/xodapi/vibeport/discussions)
-- 📧 **Email:** support@vibeport.dev *(coming soon)*
 
 ---
 

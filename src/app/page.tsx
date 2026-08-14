@@ -10,7 +10,7 @@ export default function Home() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-pill text-accent text-sm font-medium">
             <Zap className="w-4 h-4" />
-            <span>v0.1.0 - Alpha Release</span>
+            <span>v0.3.0 - Release Candidate</span>
           </div>
           
           {/* Heading */}

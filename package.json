@@ -1,6 +1,6 @@
 {
   "name": "vibeport",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Your portal to VibeMode - LLM dashboard for model testing, quota monitoring, and proxy management",
   "private": true,
   "scripts": {

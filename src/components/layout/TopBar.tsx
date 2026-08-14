@@ -38,7 +38,7 @@ export function TopBar() {
           <span>{statusLabel}</span>
         </span>
         <span className="hidden rounded-pill border border-border bg-bg-3 px-3 py-1.5 text-xs text-text-muted sm:inline">
-          v0.1.0
+          v0.3.0
         </span>
       </div>
     </header>

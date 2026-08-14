@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractOpenAiTextDelta } from './sse';
+import { extractOpenAiCompletionText, extractOpenAiTextDelta } from './sse';
 
 describe('extractOpenAiTextDelta', () => {
   it('extracts a text delta from an OpenAI SSE frame', () => {
@@ -12,5 +12,16 @@ describe('extractOpenAiTextDelta', () => {
 
   it('returns null for malformed stream payloads', () => {
     expect(extractOpenAiTextDelta('data: not-json\n\n')).toBeNull();
+  });
+});
+
+describe('extractOpenAiCompletionText', () => {
+  it('extracts assistant text from a non-streaming completion', () => {
+    expect(extractOpenAiCompletionText({ choices: [{ message: { content: 'Hello!' } }] })).toBe('Hello!');
+  });
+
+  it('returns null for unknown response shapes', () => {
+    expect(extractOpenAiCompletionText({ choices: [] })).toBeNull();
+    expect(extractOpenAiCompletionText('not a completion')).toBeNull();
   });
 });

@@ -19,3 +19,16 @@ export function extractOpenAiTextDelta(frame: string): string | null {
 
   return text;
 }
+
+export function extractOpenAiCompletionText(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+
+  const choices = (payload as { choices?: unknown }).choices;
+  if (!Array.isArray(choices) || !choices[0] || typeof choices[0] !== 'object') return null;
+
+  const message = (choices[0] as { message?: unknown }).message;
+  if (!message || typeof message !== 'object') return null;
+
+  const content = (message as { content?: unknown }).content;
+  return typeof content === 'string' ? content : null;
+}

@@ -4,7 +4,7 @@ import { BookmarkPlus, Clipboard, LoaderCircle, RotateCcw, Send, Trash2, Triangl
 import { FormEvent, KeyboardEvent, useEffect, useState } from 'react';
 import { ProxyApiError, proxyApi } from '@/lib/api/proxy';
 import { useModels } from '@/lib/hooks/useModels';
-import { extractOpenAiTextDelta } from '@/lib/utils/sse';
+import { extractOpenAiCompletionText, extractOpenAiTextDelta } from '@/lib/utils/sse';
 
 const HISTORY_KEY = 'vibeport:prompt-history';
 const SAVED_PROMPTS_KEY = 'vibeport:saved-prompts';
@@ -92,7 +92,12 @@ export default function ModelsPage() {
               messages: [{ role: 'user', content: cleanPrompt }],
               stream: false,
             });
-            return { model: selectedModel, response: JSON.stringify(result, null, 2), error: null, elapsed: Math.round(performance.now() - compareStarted) };
+            return {
+              model: selectedModel,
+              response: extractOpenAiCompletionText(result) ?? JSON.stringify(result, null, 2),
+              error: null,
+              elapsed: Math.round(performance.now() - compareStarted),
+            };
           } catch (caught) {
             return { model: selectedModel, response: '', error: messageForError(caught), elapsed: Math.round(performance.now() - compareStarted) };
           }
@@ -148,7 +153,7 @@ export default function ModelsPage() {
           messages: [{ role: 'user', content: cleanPrompt }],
           stream: false,
         });
-        setResponse(JSON.stringify(result, null, 2));
+        setResponse(extractOpenAiCompletionText(result) ?? JSON.stringify(result, null, 2));
       }
 
       const nextHistory = [cleanPrompt, ...history.filter((item) => item !== cleanPrompt)].slice(0, 20);
